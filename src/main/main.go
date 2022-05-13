@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/duke-git/lancet/v2/convertor"
 	"mover/src/common"
 )
 
@@ -12,7 +13,8 @@ func main() {
 	if err != nil {
 		log.WithError(err).Error("Exited:")
 	} else {
-		log.Infoln("the arguments parsed:", setting.String())
+		str := convertor.ToString(*setting)
+		log.Infoln("the arguments parsed:", str)
 		common.Detect(*setting)
 	}
 
