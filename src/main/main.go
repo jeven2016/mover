@@ -1,20 +1,19 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"mover/src/common"
 )
 
 var log = common.Log
 
 func main() {
-	log.Infoln("main ready")
+	log.Infoln("Mover program started")
 	setting, err := common.GetParams()
 	if err != nil {
-		println(err)
+		log.WithError(err).Error("Exited:")
+	} else {
+		log.Infoln("the arguments parsed:", setting.String())
+		common.Detect(*setting)
 	}
-	log.WithFields(logrus.Fields{
-		"from": setting.From,
-		"to":   setting.To,
-	}).Infoln("the arguments retrieved")
+
 }
