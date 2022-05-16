@@ -17,3 +17,5 @@ func (s *Setting) Defaults() *Setting {
 	s.createRootDirectory = true
 	return s
 }
+
+var FileChan = make(chan string)

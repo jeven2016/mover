@@ -16,6 +16,7 @@ func main() {
 		str := convertor.ToString(*setting)
 		log.Infoln("the arguments parsed:", str)
 		common.Detect(*setting)
+		//select {}
 	}
 
 }

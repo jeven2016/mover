@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/duke-git/lancet/v2/fileutil"
+	"github.com/duke-git/lancet/v2/slice"
 	"os"
+	"path/filepath"
 )
 
 func Detect(setting Setting) error {
@@ -12,8 +13,11 @@ func Detect(setting Setting) error {
 	}
 
 	for _, sourceDir := range dirs {
-		log.Infoln("sourceDir is", sourceDir.Name())
+		ext := filepath.Ext(sourceDir.Name())
+		//find the files with corresponding extension
+		if slice.Contain(setting.fileExtension, ext) {
+			println(ext)
+		}
 	}
-	fileutil.IsDir("")
 	return nil
 }
