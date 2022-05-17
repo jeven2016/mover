@@ -9,8 +9,7 @@ var log = common.Log
 
 func main() {
 	log.Infoln("Mover program started")
-	setting, err := common.GetParams()
-	if err != nil {
+	if setting, err := common.GetParams(); err != nil {
 		log.WithError(err).Error("Program Exited:")
 	} else {
 		str := convertor.ToString(*setting)

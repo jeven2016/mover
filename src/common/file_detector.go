@@ -33,8 +33,7 @@ func handleFile(setting Setting, dir os.DirEntry, parentPath string, checkParent
 		}
 		//file size should be greater than the defined minimum size
 		if fileInfo.Size() >= setting.MinSize() {
-			err := ensureDestDir(parentPath)
-			if err != nil {
+			if err := ensureDestDir(parentPath); err != nil {
 				log.WithFields(logrus.Fields{
 					"parentPath": parentPath,
 					"file":       dir.Name(),
