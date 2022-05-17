@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/duke-git/lancet/v2/fileutil"
 	"gopkg.in/ini.v1"
 	"regexp"
 	"strconv"
@@ -68,6 +69,10 @@ func ReadIni() (*Setting, error) {
 
 	if from == "" || to == "" {
 		return setting, errors.New(fmt.Sprintf("invalid arguments: from and to are required ,  from=%v, to=%v", from, to))
+	}
+
+	if !fileutil.IsExist(strings.Trim(from, " ")) {
+		return setting, errors.New("argument from isn't a valid directory, you need to create it in advance")
 	}
 
 	if chkErr != nil {
