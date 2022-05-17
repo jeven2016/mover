@@ -72,7 +72,7 @@ func ReadIni() (*Setting, error) {
 	}
 
 	if !fileutil.IsExist(strings.Trim(from, " ")) {
-		return setting, errors.New("argument from isn't a valid directory, you need to create it in advance")
+		return setting, errors.New("argument from isn't a valid directory")
 	}
 
 	if chkErr != nil {

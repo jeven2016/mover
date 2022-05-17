@@ -11,12 +11,13 @@ func main() {
 	log.Infoln("Mover program started")
 	setting, err := common.GetParams()
 	if err != nil {
-		log.WithError(err).Error("Exited:")
+		log.WithError(err).Error("Program Exited:")
 	} else {
 		str := convertor.ToString(*setting)
 		log.Infoln("the arguments parsed:", str)
 		common.Detect(*setting)
-		//select {}
+		log.Infoln("Program started")
+		select {}
 	}
 
 }
