@@ -1,12 +1,17 @@
 package common
 
+import "math"
+
 type Setting struct {
-	from                string
-	to                  string
+	From                string
+	To                  string
 	fileExtension       []string
 	fileMinSize         int64
 	fileMinSizeUnit     string
 	checkPicture        bool
+	pictureExtension    []string
+	picMinSize          int64
+	picMinSizeUnit      string
 	createRootDirectory bool
 }
 
@@ -18,22 +23,20 @@ func (s *Setting) Defaults() *Setting {
 	return s
 }
 
-func (s *Setting) MinSize() int64 {
+func (s *Setting) MinSize(baseValue int64, unit string) int64 {
 	var initialVal int64
-	switch s.fileMinSizeUnit {
+	switch unit {
 	case "B":
 		initialVal = 1
 	case "KB":
 		initialVal = 1024
 	case "MB":
-		initialVal = 1024 * 1024
+		initialVal = int64(math.Pow(1024, 2))
 	case "GB":
-		initialVal = 1024 * 1024 * 1024
+		initialVal = int64(math.Pow(1024, 3))
 	default:
 		initialVal = 1
 	}
 
-	return initialVal
+	return baseValue * initialVal
 }
-
-var FileChan = make(chan string)

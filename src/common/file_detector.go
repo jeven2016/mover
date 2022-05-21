@@ -1,13 +1,15 @@
 package common
 
 import (
-	"fmt"
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/duke-git/lancet/v2/slice"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+type Callback func(int, string) bool
 
 func ensureDestDir(destPath string) error {
 	exist := fileutil.IsExist(destPath)
@@ -20,58 +22,139 @@ func ensureDestDir(destPath string) error {
 	return nil
 }
 
-func handleFile(setting Setting, dir os.DirEntry, parentPath string, checkParent bool) {
-	if !checkParent {
+func supportedFileExtension(extensions []string, callback Callback) (supported bool) {
+	_, validFile := slice.Find(extensions, callback)
+	return validFile
+}
+
+func handleFile(setting Setting, sourcePath string, destPath string) {
+	if fileNames, err := fileutil.ListFileNames(sourcePath); err == nil {
+
+		//查找最匹配且容量最大的文件
+		var maxFileSize int64
+		var curFileInfo os.FileInfo
+
+		for _, name := range fileNames {
+			//判断文件后缀是否支持
+			validFile := supportedFileExtension(setting.fileExtension, func(i int, suffix string) bool {
+				return strings.HasSuffix(name, suffix)
+			})
+			if !validFile {
+				continue
+			}
+
+			if fileInfo, err := os.Stat(filepath.Join(sourcePath, name)); err == nil {
+				fileSize := fileInfo.Size()
+				if maxFileSize == 0 ||
+					(fileSize > maxFileSize && fileSize >=
+						setting.MinSize(setting.fileMinSize, setting.fileMinSizeUnit)) {
+					maxFileSize, curFileInfo = fileSize, fileInfo
+				}
+			}
+		}
+
+		if curFileInfo != nil {
+			picFileName := findPicture(setting, fileNames, curFileInfo)
+
+			folderPath := strings.ReplaceAll(sourcePath, setting.From, "")
+			linuxPath := filepath.ToSlash(folderPath)
+
+			if picFileName == "" {
+				copyFile(linuxPath, setting, sourcePath, curFileInfo)
+			} else {
+				destPath := filepath.Join(setting.To, linuxPath)
+				err := ensureDestDir(destPath)
+				if err != nil {
+					log.WithFields(logrus.Fields{
+						"destPath": destPath,
+					}).WithError(err).Error("failed to create directory:")
+					return
+				}
+
+				CopiedLog.Infoln("Copied：", filepath.Join(sourcePath, curFileInfo.Name()), "->",
+					filepath.Join(destPath, curFileInfo.Name()))
+
+				CopiedLog.Infoln("Copied：", filepath.Join(sourcePath, curFileInfo.Name()), "->",
+					filepath.Join(destPath, curFileInfo.Name()))
+			}
+		}
+	}
+}
+
+func copyFile(linuxPath string, setting Setting, sourcePath string, curFileInfo os.FileInfo) {
+	//当没有图片时，拷贝到根目录
+	//source: F:\new_down\, 第一级目录：\冲1
+	//F:\new_down\冲1\xx.mp4  -> 不会拷贝上一层目录
+	//F:\new_down\冲1\fold1\mm.mp4  -> 拷贝到d:\dest\冲1\下
+
+	var catalogFolder string = linuxPath
+	if strings.HasPrefix(linuxPath, "/") {
+		catalogFolder = strings.TrimLeft(catalogFolder, "/")
+	}
+	if strings.Contains(catalogFolder, "/") {
+		catalogFolder = strings.Split(catalogFolder, "/")[0]
+	}
+
+	destFilePath := filepath.Join(setting.To, catalogFolder, curFileInfo.Name())
+	err := ensureDestDir(destFilePath)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"destPath": destFilePath,
+		}).WithError(err).Error("failed to create directory:")
 		return
 	}
-	validFile := slice.Contain(setting.fileExtension, filepath.Ext(dir.Name()))
-	if validFile {
-		fileInfo, err := dir.Info()
-		if err != nil {
-			log.WithError(err).Warnf(fmt.Sprintf("the file is failed to handle: %v", dir.Name()))
-			return
+
+	CopiedLog.Infoln("Copied：", filepath.Join(sourcePath, curFileInfo.Name()), "->", destFilePath)
+}
+
+func findPicture(setting Setting, fileNames []string, curFileInfo os.FileInfo) string {
+	for _, name := range fileNames {
+		validPicFile := supportedFileExtension(setting.pictureExtension, func(i int, suffix string) bool {
+			return strings.HasSuffix(name, suffix)
+		})
+		if !validPicFile {
+			continue
 		}
-		//file size should be greater than the defined minimum size
-		if fileInfo.Size() >= setting.MinSize() {
-			if err := ensureDestDir(parentPath); err != nil {
-				log.WithFields(logrus.Fields{
-					"parentPath": parentPath,
-					"file":       dir.Name(),
-				}).WithError(err).Warnln("failed to create parent directory for this file")
-			}
-			log.Infoln(fmt.Sprintf("file %v is moved to %v", fileInfo.Name(), filepath.Join(parentPath, dir.Name())))
-		} else {
-			log.WithFields(logrus.Fields{
-				"parentPath": parentPath,
-				"file":       dir.Name(),
-			}).Infoln("the file is ignored since its size(%v) less than %v", fileInfo.Size())
+		realName := strings.Split(name, ".")[0]
+		if strings.Contains(curFileInfo.Name(), realName) {
+			//找到最符合的图片
+			return name
 		}
 	}
+	return ""
 }
 
-func Detect(setting Setting) error {
-	return detectSubDir(setting, setting.from, setting.to)
+func Detect(setting Setting) {
+	//遍历所有的目录并插入到chan中
+	go detectDirs(setting, setting.From, setting.To)
+
+	//处理各个目录下的文件
+	go func(s Setting) {
+		for folderInfo := range FolderChan {
+			handleFile(s, folderInfo.sourceDir, folderInfo.ToDestDir())
+		}
+	}(setting)
 }
 
-func detectSubDir(setting Setting, sourcePath string, parentPath string) error {
+func detectDirs(setting Setting, sourcePath string, parentPath string) {
+	//分析源目录下的文件
 	dirs, err := os.ReadDir(sourcePath)
-
-	for _, dir := range dirs {
-		go func(dirEntry os.DirEntry) {
-			if dirEntry.IsDir() {
-				entryErr := detectSubDir(setting, filepath.Join(sourcePath, dirEntry.Name()),
-					filepath.Join(parentPath, dirEntry.Name()))
-				if entryErr != nil {
-					log.WithFields(logrus.Fields{
-						"sourcePath": parentPath,
-						"parentPath": parentPath,
-						"dir":        dirEntry.Name(),
-					}).WithError(err).Warnln("failed to handle directory:")
-				}
-			} else {
-				handleFile(setting, dirEntry, parentPath, true)
-			}
-		}(dir)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"sourcePath": parentPath,
+		}).WithError(err).Warnln("failed To check this directory:")
 	}
-	return err
+
+	//将当前目录添加到channel中
+	FolderChan <- FolderInfo{
+		sourceDir: sourcePath,
+		setting:   setting,
+	}
+
+	for _, dirEntry := range dirs {
+		if dirEntry.IsDir() {
+			detectDirs(setting, filepath.Join(sourcePath, dirEntry.Name()),
+				filepath.Join(parentPath, dirEntry.Name()))
+		}
+	}
 }

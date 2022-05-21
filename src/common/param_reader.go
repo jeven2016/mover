@@ -39,8 +39,8 @@ func GetParams() (*Setting, error) {
 		}
 	} else {
 		setting = &Setting{
-			from: from,
-			to:   to,
+			From: from,
+			To:   to,
 		}
 	}
 	return setting, nil
@@ -54,7 +54,7 @@ func ReadIni() (*Setting, error) {
 	cfg, err := ini.Load("./config.ini")
 
 	if err != nil {
-		Log.Printf("failed to read config.ini: %v", err)
+		Log.Printf("failed To read config.ini: %v", err)
 		return nil, err
 	}
 	var setting = &Setting{}
@@ -65,14 +65,16 @@ func ReadIni() (*Setting, error) {
 	fileExtension := cfg.Section("setting").Key("file_extension").String()
 	fileMinSize := cfg.Section("setting").Key("file_min_size").String()
 	checkPicture, chkErr := cfg.Section("setting").Key("check_picture").Bool()
+	pictureExtension := cfg.Section("setting").Key("picture_extension").String()
+	picMinSize := cfg.Section("setting").Key("pic_min_size").String()
 	createRootDirectory, cerr := cfg.Section("setting").Key("create_root_directory").Bool()
 
 	if from == "" || to == "" {
-		return setting, errors.New(fmt.Sprintf("invalid arguments: from and to are required ,  from=%v, to=%v", from, to))
+		return setting, errors.New(fmt.Sprintf("invalid arguments: From and To are required ,  From=%v, To=%v", from, to))
 	}
 
 	if !fileutil.IsExist(strings.Trim(from, " ")) {
-		return setting, errors.New("argument from isn't a valid directory")
+		return setting, errors.New("argument From isn't a valid directory")
 	}
 
 	if chkErr != nil {
@@ -84,30 +86,45 @@ func ReadIni() (*Setting, error) {
 	}
 
 	//parse the file_min_size
-	subStrings := fileSizeRegex.FindStringSubmatch(fileMinSize)
-	subLen := len(subStrings)
-	if subLen == 3 {
-		fileSize, err := strconv.ParseInt(subStrings[1], 10, 64)
-		if err != nil || !checkFileSizeUnitType(subStrings[2]) {
-			return nil, errors.New("file_min_size is invalid, the value should be in this format: 300MB")
-		}
-		setting.fileMinSize = fileSize
-		setting.fileMinSizeUnit = subStrings[2]
+	setting.fileMinSize, setting.fileMinSizeUnit, err = parseNumberAndUnit(fileMinSize)
+	if err != nil {
+		return nil, err
 	}
 
-	setting.from = from
-	setting.to = to
+	//parse the pic_min_size
+	setting.picMinSize, setting.picMinSizeUnit, err = parseNumberAndUnit(picMinSize)
+	if err != nil {
+		return nil, err
+	}
+
+	setting.From = from
+	setting.To = to
 	setting.fileExtension = strings.Split(fileExtension, ",")
 
 	setting.checkPicture = checkPicture
+	setting.pictureExtension = strings.Split(pictureExtension, ",")
 	setting.createRootDirectory = createRootDirectory
 
 	return setting, nil
 }
 
+func parseNumberAndUnit(minSizeString string) (int64, string, error) {
+	//parse the file_min_size
+	subStrings := fileSizeRegex.FindStringSubmatch(minSizeString)
+	subLen := len(subStrings)
+	if subLen == 3 {
+		fileSize, err := strconv.ParseInt(subStrings[1], 10, 64)
+		if err != nil || !checkFileSizeUnitType(subStrings[2]) {
+			return 0, "", errors.New("file_min_size is invalid, the value should be in this format '200KB' or '300MB'")
+		}
+		return fileSize, subStrings[2], nil
+	}
+	return 0, "", nil
+}
+
 func params() (bool, string, string) {
-	from := flag.String("from", "", "the source directory to check")
-	to := flag.String("to", "", "the destination directory to move")
+	from := flag.String("From", "", "the source directory To check")
+	to := flag.String("To", "", "the destination directory To move")
 	flag.Parse()
 	if *from == "" || *to == "" {
 		return false, "", ""
