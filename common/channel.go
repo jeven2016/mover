@@ -8,11 +8,12 @@ import (
 var FolderChan = make(chan FolderInfo, 1000)
 
 type FolderInfo struct {
-	sourceDir   string
-	setting     Setting
-	hasPicture  bool
-	pictureName string
-	fileName    string
+	sourceDir    string
+	setting      Setting
+	hasPicture   bool
+	pictureName  string
+	fileName     string
+	copyAllFiles bool
 }
 
 // ToDestDir 拼接需要创建的目录

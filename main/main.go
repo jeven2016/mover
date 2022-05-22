@@ -2,21 +2,24 @@ package main
 
 import (
 	"github.com/duke-git/lancet/v2/convertor"
-	common2 "mover/common"
+	"mover/common"
 )
 
-var log = common2.Log
+var log = common.Log
 
 func main() {
+	defer log.Infoln("All jobs finished, exit now")
+
 	log.Infoln("Mover program started")
-	if setting, err := common2.GetParams(); err != nil {
+	setting, err := common.GetParams()
+	if err != nil {
 		log.WithError(err).Error("Program Exited:")
-	} else {
-		str := convertor.ToString(*setting)
-		log.Infoln("the arguments parsed:", str)
-		common2.Detect(*setting)
-		log.Infoln("Program started")
-		select {}
+		return
 	}
+
+	str := convertor.ToString(*setting)
+	log.Infoln("the arguments parsed:", str)
+	log.Infoln("Program started")
+	common.Detect(*setting)
 
 }
