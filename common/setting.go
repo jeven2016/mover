@@ -5,21 +5,21 @@ import "math"
 type Setting struct {
 	From                string
 	To                  string
-	fileExtension       []string
-	fileMinSize         int64
-	fileMinSizeUnit     string
-	checkPicture        bool
-	pictureExtension    []string
-	picMinSize          int64
-	picMinSizeUnit      string
-	createRootDirectory bool
+	FileExtension       []string
+	FileMinSize         int64
+	FileMinSizeUnit     string
+	CheckPicture        bool
+	PictureExtension    []string
+	PicMinSize          int64
+	PicMinSizeUnit      string
+	CreateRootDirectory bool
 }
 
 func (s *Setting) Defaults() *Setting {
-	s.fileExtension = []string{".mp4", ".mkv", ".avi"}
-	s.fileMinSize = 500 * 1024 * 1024 //500MB
-	s.checkPicture = true
-	s.createRootDirectory = true
+	s.FileExtension = []string{".mp4", ".mkv", ".avi"}
+	s.FileMinSize = 500 * 1024 * 1024 //500MB
+	s.CheckPicture = true
+	s.CreateRootDirectory = true
 	return s
 }
 

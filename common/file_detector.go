@@ -74,7 +74,7 @@ func handleFile(setting Setting, folderInfo FolderInfo) {
 		if folderInfo.copyAllFiles {
 			for _, name := range fileNames {
 				//判断文件后缀是否支持
-				validFile := supportedFileExtension(setting.fileExtension, func(i int, suffix string) bool {
+				validFile := supportedFileExtension(setting.FileExtension, func(i int, suffix string) bool {
 					return strings.HasSuffix(name, suffix)
 				})
 				if !validFile {
@@ -103,7 +103,7 @@ func handleFile(setting Setting, folderInfo FolderInfo) {
 
 		for _, name := range fileNames {
 			//判断文件后缀是否支持
-			validFile := supportedFileExtension(setting.fileExtension, func(i int, suffix string) bool {
+			validFile := supportedFileExtension(setting.FileExtension, func(i int, suffix string) bool {
 				return strings.HasSuffix(name, suffix)
 			})
 			if !validFile {
@@ -113,7 +113,7 @@ func handleFile(setting Setting, folderInfo FolderInfo) {
 			if fileInfo, err := os.Stat(filepath.Join(sourcePath, name)); err == nil {
 				fileSize := fileInfo.Size()
 				if maxFileSize == 0 && fileSize >
-					setting.MinSize(setting.fileMinSize, setting.fileMinSizeUnit) {
+					setting.MinSize(setting.FileMinSize, setting.FileMinSizeUnit) {
 					maxFileSize, curFileInfo = fileSize, fileInfo
 				}
 
@@ -184,7 +184,7 @@ func copyFile(linuxPath string, setting Setting, sourcePath string, curFileInfo 
 
 func findPicture(setting Setting, fileNames []string, curFileInfo os.FileInfo) string {
 	for _, name := range fileNames {
-		validPicFile := supportedFileExtension(setting.pictureExtension, func(i int, suffix string) bool {
+		validPicFile := supportedFileExtension(setting.PictureExtension, func(i int, suffix string) bool {
 			return strings.HasSuffix(name, suffix)
 		})
 		if !validPicFile {

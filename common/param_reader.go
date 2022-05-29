@@ -86,24 +86,24 @@ func ReadIni() (*Setting, error) {
 	}
 
 	//parse the file_min_size
-	setting.fileMinSize, setting.fileMinSizeUnit, err = parseNumberAndUnit(fileMinSize)
+	setting.FileMinSize, setting.FileMinSizeUnit, err = parseNumberAndUnit(fileMinSize)
 	if err != nil {
 		return nil, err
 	}
 
 	//parse the pic_min_size
-	setting.picMinSize, setting.picMinSizeUnit, err = parseNumberAndUnit(picMinSize)
+	setting.PicMinSize, setting.PicMinSizeUnit, err = parseNumberAndUnit(picMinSize)
 	if err != nil {
 		return nil, err
 	}
 
 	setting.From = from
 	setting.To = to
-	setting.fileExtension = strings.Split(fileExtension, ",")
+	setting.FileExtension = strings.Split(fileExtension, ",")
 
-	setting.checkPicture = checkPicture
-	setting.pictureExtension = strings.Split(pictureExtension, ",")
-	setting.createRootDirectory = createRootDirectory
+	setting.CheckPicture = checkPicture
+	setting.PictureExtension = strings.Split(pictureExtension, ",")
+	setting.CreateRootDirectory = createRootDirectory
 
 	return setting, nil
 }
