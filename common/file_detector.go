@@ -124,7 +124,7 @@ func handleFile(setting *Setting, folderInfo FolderInfo) {
 		if curFileInfo != nil {
 			picFileName := findPicture(setting, fileNames, curFileInfo)
 
-			folderPath := strings.ReplaceAll(sourcePath, setting.From, "")
+			folderPath := strings.ReplaceAll(sourcePath, folderInfo.baseSourceDir, "")
 			linuxPath := filepath.ToSlash(folderPath)
 
 			if picFileName == "" {
