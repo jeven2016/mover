@@ -67,7 +67,7 @@ func doCopy(source string, dest string) error {
 	return nil
 }
 
-func handleFile(setting Setting, folderInfo FolderInfo) {
+func handleFile(setting *Setting, folderInfo FolderInfo) {
 	sourcePath := folderInfo.sourceDir
 	if fileNames, err := fileutil.ListFileNames(sourcePath); err == nil {
 
@@ -82,9 +82,7 @@ func handleFile(setting Setting, folderInfo FolderInfo) {
 					continue
 				}
 
-				folderPath := strings.ReplaceAll(sourcePath, setting.From, "")
-				linuxPath := filepath.ToSlash(folderPath)
-				destPath := filepath.Join(setting.To, linuxPath)
+				destPath := folderInfo.ToDestDir()
 
 				newFileName := getPureName(name)
 				realSource := filepath.Join(sourcePath, name)
@@ -159,7 +157,7 @@ func handleFile(setting Setting, folderInfo FolderInfo) {
 	}
 }
 
-func copyFile(linuxPath string, setting Setting, sourcePath string, curFileInfo os.FileInfo) {
+func copyFile(linuxPath string, setting *Setting, sourcePath string, curFileInfo os.FileInfo) {
 	//当没有图片时，拷贝到根目录
 	//source: F:\new_down\, 第一级目录：\冲1
 	//F:\new_down\冲1\xx.mp4  -> 不会拷贝上一层目录
@@ -182,7 +180,7 @@ func copyFile(linuxPath string, setting Setting, sourcePath string, curFileInfo 
 	}
 }
 
-func findPicture(setting Setting, fileNames []string, curFileInfo os.FileInfo) string {
+func findPicture(setting *Setting, fileNames []string, curFileInfo os.FileInfo) string {
 	for _, name := range fileNames {
 		validPicFile := supportedFileExtension(setting.PictureExtension, func(i int, suffix string) bool {
 			return strings.HasSuffix(name, suffix)
@@ -199,7 +197,7 @@ func findPicture(setting Setting, fileNames []string, curFileInfo os.FileInfo) s
 	return ""
 }
 
-func Detect(setting Setting) {
+func Detect(setting *Setting) {
 	wg.Add(1)
 
 	//遍历所有的目录并插入到chan中
@@ -210,7 +208,9 @@ func Detect(setting Setting) {
 			wg.Done()
 		}()
 		//第一级目录下的文件全部拷贝，子目录只拷贝特定的文件
-		detectDirs(setting, setting.From, setting.To, 0)
+		for _, from := range setting.From {
+			detectDirs(from, setting, from, setting.To, 0)
+		}
 	}()
 
 	//4 processors
@@ -228,7 +228,7 @@ func Detect(setting Setting) {
 	wg.Wait()
 }
 
-func detectDirs(setting Setting, sourcePath string, parentPath string, depth int32) {
+func detectDirs(originSourcePath string, setting *Setting, sourcePath string, parentPath string, depth int32) {
 	//分析源目录下的文件
 	dirs, err := os.ReadDir(sourcePath)
 	if err != nil {
@@ -239,14 +239,15 @@ func detectDirs(setting Setting, sourcePath string, parentPath string, depth int
 
 	//将当前目录添加到channel中
 	FolderChan <- FolderInfo{
-		sourceDir:    sourcePath,
-		setting:      setting,
-		copyAllFiles: depth == 1, //第一层级拷贝所有合适的文件
+		sourceDir:     sourcePath,
+		baseSourceDir: originSourcePath,
+		setting:       setting,
+		copyAllFiles:  depth == 1, //第一层级拷贝所有合适的文件
 	}
 
 	for _, dirEntry := range dirs {
 		if dirEntry.IsDir() {
-			detectDirs(setting, filepath.Join(sourcePath, dirEntry.Name()),
+			detectDirs(originSourcePath, setting, filepath.Join(sourcePath, dirEntry.Name()),
 				filepath.Join(parentPath, dirEntry.Name()), depth+1)
 		}
 	}

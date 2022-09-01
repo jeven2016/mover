@@ -3,7 +3,7 @@ package common
 import "math"
 
 type Setting struct {
-	From                string
+	From                []string
 	To                  string
 	FileExtension       []string
 	FileMinSize         int64

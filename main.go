@@ -5,21 +5,23 @@ import (
 	"mover/common"
 )
 
-var log = common.Log
-
 func main() {
-	defer log.Infoln("All jobs finished, exit now")
+	var log = common.Log
 
-	log.Infoln("Mover program started")
-	setting, err := common.GetParams()
+	log.Infoln("Program starting")
+
+	params, err := common.SetupViper()
 	if err != nil {
-		log.WithError(err).Error("Program Exited:")
-		return
+		panic(err)
 	}
 
-	str := convertor.ToString(*setting)
-	log.Infoln("the arguments parsed:", str)
-	log.Infoln("Program started")
-	common.Detect(*setting)
+	if setting, err := common.Validate(params); err != nil {
+		log.WithError(err).Error("An error occurs")
+	} else {
+		str := convertor.ToString(*setting)
+		log.Infoln("the parameters parsed:", str)
+		common.Detect(setting)
+		select {}
+	}
 
 }
