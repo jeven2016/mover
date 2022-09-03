@@ -7,9 +7,9 @@ import (
 var config = new(Parameters)
 
 func SetupViper() (*Parameters, error) {
-	viper.SetConfigName("conf")
+	viper.SetConfigName("config")
 	viper.SetConfigType("ini")
-	viper.AddConfigPath("./conf")
+	viper.AddConfigPath(".")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Failed to load conf.ini: %v", err)

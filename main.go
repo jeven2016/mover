@@ -8,13 +8,12 @@ import (
 func main() {
 	var log = common.Log
 
-	log.Infoln("Program starting")
-
 	params, err := common.SetupViper()
 	if err != nil {
 		panic(err)
 	}
 
+	common.ShowProgress()
 	if setting, err := common.Validate(params); err != nil {
 		log.WithError(err).Error("An error occurs")
 	} else {
