@@ -3,17 +3,22 @@ package common
 import (
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/duke-git/lancet/v2/slice"
+	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 var nameReg = regexp.MustCompile("(\\[.*?])|(.*?原版首发_)|(.*?@)|(_uncensored)")
 
 var wg = sync.WaitGroup{}
+
+//结果统计类
+var stats = &Stats{}
 
 type Callback func(int, string) bool
 
@@ -198,21 +203,22 @@ func findPicture(setting *Setting, fileNames []string, curFileInfo os.FileInfo) 
 }
 
 func Detect(setting *Setting) {
-	wg.Add(1)
 
 	//遍历所有的目录并插入到chan中
-	go func() {
-		defer func() {
-			log.Infoln("Finished to detect the source directory")
-			close(FolderChan)
-			wg.Done()
-		}()
-		//第一级目录下的文件全部拷贝，子目录只拷贝特定的文件
-		for _, from := range setting.From {
-			detectDirs(from, setting, from, setting.To, 0)
-		}
-	}()
+	//第一级目录下的文件全部拷贝，子目录只拷贝特定的文件
+	for _, from := range setting.From {
+		detectDirs(from, setting, from, setting.To, 0)
+	}
+	close(FolderChan)
 
+	stats.FolderCount = len(FolderChan)
+
+	progressSetting := &ProgressSetting{
+		Total: int64(stats.FolderCount),
+		Units: &progress.UnitsDefault,
+	}
+
+	InitProgress(progressSetting, time.Duration(200)*time.Millisecond)
 	//4 processors
 	//处理各个目录下的文件
 	for i := 0; i < 4; i++ {

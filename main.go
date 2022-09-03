@@ -20,7 +20,6 @@ func main() {
 		str := convertor.ToString(*setting)
 		log.Infoln("the parameters parsed:", str)
 		common.Detect(setting)
-		select {}
 	}
 
 }
