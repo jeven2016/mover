@@ -38,25 +38,44 @@ func Validate(params *Parameters) (*Setting, error) {
 	}
 
 	//parse the file_min_size
-	subStrings := fileSizeRegex.FindStringSubmatch(params.MinSize)
-	subLen := len(subStrings)
-	if subLen == 3 {
-		fileSize, err := convertor.ToInt(subStrings[1])
-		if err != nil || !checkFileSizeUnitType(subStrings[2]) {
-			return nil, errors.New("file_min_size is invalid, the value should be in this format: 300MB")
-		}
-		setting.FileMinSize = fileSize
-		setting.FileMinSizeUnit = subStrings[2]
+	err, fileSize, fileSizeUnit := parseFileSize(params.MinSize)
+	if err != nil {
+		return nil, err
 	}
+	setting.FileMinSize = fileSize
+	setting.FileMinSizeUnit = fileSizeUnit
+
+	//parse the pic_min_size
+	err, fileSize, fileSizeUnit = parseFileSize(params.MinSize)
+	if err != nil {
+		return nil, err
+	}
+	setting.PicMinSize = fileSize
+	setting.PicMinSizeUnit = fileSizeUnit
 
 	setting.From = sourcePaths
 	setting.To = to
 	setting.FileExtension = strings.Split(params.FileExtension, ",")
+	setting.PictureExtension = strings.Split(params.PicExtension, ",")
 
 	setting.CheckPicture = params.CheckPicture
 	setting.CreateRootDirectory = params.CreateRootDirectory
 
 	return setting, nil
+}
+
+func parseFileSize(minSize string) (error, int64, string) {
+	subStrings := fileSizeRegex.FindStringSubmatch(minSize)
+	subLen := len(subStrings)
+	errorMsg := "file_min_size or pic_min_size is invalid, the value should be in this format: 300MB"
+	if subLen == 3 {
+		fileSize, err := convertor.ToInt(subStrings[1])
+		if err != nil || !checkFileSizeUnitType(subStrings[2]) {
+			return errors.New(errorMsg), 0, ""
+		}
+		return nil, fileSize, subStrings[2]
+	}
+	return errors.New(errorMsg), 0, ""
 }
 
 func checkFileSizeUnitType(fileSizeUnitType string) bool {

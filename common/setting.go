@@ -15,14 +15,6 @@ type Setting struct {
 	CreateRootDirectory bool
 }
 
-func (s *Setting) Defaults() *Setting {
-	s.FileExtension = []string{".mp4", ".mkv", ".avi"}
-	s.FileMinSize = 500 * 1024 * 1024 //500MB
-	s.CheckPicture = true
-	s.CreateRootDirectory = true
-	return s
-}
-
 func (s *Setting) MinSize(baseValue int64, unit string) int64 {
 	var initialVal int64
 	switch unit {

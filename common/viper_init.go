@@ -2,15 +2,17 @@ package common
 
 import (
 	"github.com/spf13/viper"
+	"path/filepath"
 )
 
-var config = new(Parameters)
+var config = new(GlobalSetting)
 
-func SetupViper() (*Parameters, error) {
+func SetupViper() (*GlobalSetting, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("ini")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("./")
 
+	println(filepath.Abs("./"))
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Failed to load conf.ini: %v", err)
 		return nil, err
@@ -34,5 +36,5 @@ func SetupViper() (*Parameters, error) {
 }
 
 func getConfig() *Parameters {
-	return config
+	return config.Parameters
 }
